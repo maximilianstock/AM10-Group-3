@@ -1,0 +1,40 @@
+---
+title: "Global Sea Level Rise"
+author: "Maximilian Stock"
+date: "11/26/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(tidyverse)
+library(janitor)
+```
+```{r}
+months <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+
+NorthernHem <- list()
+SouthernHem <- list()
+
+for (i in months) {
+  NorthernHem[[i]] <- read_excel("Sea_Ice_Index_Monthly_Data_with_Statistics_G02135_v3.0.xlsx",
+    sheet = paste0(i,"-NH"), skip = 8, range = "B10:S53")
+}
+
+for (i in months) {
+  SouthernHem[[i]] <- read_excel("Sea_Ice_Index_Monthly_Data_with_Statistics_G02135_v3.0.xlsx",
+    sheet = paste0(i,"-SH"), skip = 8, range = "B10:S53")
+}
+
+bindedNH <- bind_rows(NorthernHem)
+bindedSH <- bind_rows(SouthernHem)
+
+master <- bind_rows(bindedNH, bindedSH) %>% 
+  clean_names()
+
+```
+
