@@ -38,3 +38,16 @@ master <- bind_rows(bindedNH, bindedSH) %>%
 
 ```
 
+```{r}
+sheets <- c("Land", "Population", "GDP", "Agriculture", "UrbanExtent")
+
+for (i in sheets) {
+  assign(paste0("imp", i), read_excel("new_slr-impacts_nov2010.xls", 
+    sheet = i))
+}
+
+impAgriculture <- impAgriculture %>% 
+  clean_names()
+
+```
+
