@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readxl)
 library(tidyverse)
 library(janitor)
+library(lubridate)
 ```
 
 ```{r}
@@ -67,12 +68,34 @@ tempAnomaliesGlobal <- tempAnomaliesGlobal %>%
 ```
 
 ```{r}
-library(lubridate)
+
 master <- master %>% 
   mutate(date = make_date(year, month))
 
-ggplot(master, aes(x = date, y = extent, color = hemisphere)) +
-  geom_line()
+yearlyIceMeans <- master %>% 
+  select(-reordered) %>% 
+  drop_na() %>% 
+  group_by(year, hemisphere) %>% 
+  summarise(meanEx = mean(extent), meanAno = mean(extent_anomaly), fill = if_else(meanAno >= 0, "a", "b")) %>% 
+  ggplot(aes(x = year)) +
+    geom_line(aes(y = meanEx, color = hemisphere))+
+    geom_col(aes(y = meanAno*20, fill = fill, )) +
+    scale_y_continuous(
+    
+    # Features of the first axis
+    name = "First Axis",
+    
+    # Add a second axis and specify its features
+    sec.axis = sec_axis(~.*1/20, name="Second Axis")
+  )
+
+yearlyIceMeans
+
+```
+
+```{r}
+
+
 
 ```
 
