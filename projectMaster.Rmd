@@ -130,56 +130,56 @@ ggplot(data = p2 %>%
 ```{r}
 
 impGDPBase <- impGDP %>% 
-  mutate(perc1 = x1_meter/total_gdp)
+  mutate(perc5 = x5_meter/total_gdp) %>% 
+  rename("region" = "country_2")
+```
 
-impGDPBase
+```{r}
+require(maps)
+require(viridis)
+theme_set(
+  theme_void()
+  )
+```
 
-ggplot(impGDPBase, aes(x = perc1, y = reorder(country_1, perc1))) +
-  geom_col()
+```{r}
+world_map <- map_data("world")
+ggplot(world_map, aes(x = long, y = lat, group = group)) +
+  geom_polygon(fill="lightgray", colour = "white")
+```
 
-library(tmap)
-library(sf)
-plot(world)
+```{r}
+# Some EU Contries
+some.eu.countries <- c("Argentina", "Bahamas", "Belize", "Brazil", "Chile", 
+ "Colombia"      ,        "Costa Rica"       ,     "Cuba",   "Dominican Republic"   , "Ecuador" ,             
+"El Salvador"      ,     "French Guiana"    ,     "Guatemala"      ,       "Guyana", "Haiti", 
+ "Honduras"      ,        "Jamaica"           ,    "Mexico", "Suriname"  ,           "Nicaragua"            ,"Peru",   "Panama", "Puerto Rico", "Uruguay"  ,             "Venezuela")
+# Retrievethe map data
+some.eu.maps <- map_data("world", region = some.eu.countries) %>% 
+  left_join(impGDPBase, by = "region")
 
-world <- ne_countries(scale = "medium", returnclass = "sf")
+
+library(ggrepel)
+
+# Compute the centroid as the mean longitude and lattitude
+# Used as label coordinate for country's names
+region.lab.data <- some.eu.maps %>%
+  group_by(region) %>%
+  summarise(long = mean(long), lat = mean(lat))
+
+ggplot(some.eu.maps, aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = perc5)) +
+
+  
+    geom_text_repel(box.padding = 0.5, max.overlaps = Inf, aes(label = region), data = region.lab.data, color = "black", size = 2, hjust = 0.5) +
+    scale_fill_gradient(low = "#c1cef7", high = "#061c2b")+
+  coord_sf(crs = "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs ")
+  # scale_fill_viridis_d()+
+  # theme_void()+
+  # theme(legend.position = "none")
 
 ```
 
 
-```{r pkg-install-all, eval = FALSE}
-install.packages(c("cowplot", "googleway", "ggplot2", "ggrepel", 
-    "ggspatial", "libwgeom", "sf", "rnaturalearth", "rnaturalearthdata"))
-```
 
-We start by loading the basic packages necessary for all maps, i.e. `ggplot2` and `sf`. We also suggest to use the classic dark-on-light theme for `ggplot2` (`theme_bw`), which is appropriate for maps:
-
-```{r pkg-ggplot2-sf}
-library("ggplot2")
-theme_set(theme_bw())
-library("sf")
-```
-
-The package `rnaturalearth` provides a map of countries of the entire world. Use `ne_countries` to pull country data and choose the scale (`rnaturalearthhires` is necessary for `scale = "large"`). The function can return `sp` classes (default) or directly `sf` classes, as defined in the argument `returnclass`:
-
-```{r pkg-rnatural}
-library("rnaturalearth")
-library("rnaturalearthdata")
-library(rgeos)
-
-world <- ne_countries(scale = "medium", returnclass = "sf")
-class(world)
-```
-
-
-# General concepts illustrated with the world map
-
-
-## Data and basic plot (`ggplot` and `geom_sf`)
-
-First, let us start with creating a base map of the world using `ggplot2`. This base map will then be extended with different map elements, as well as zoomed in to an area of interest. We can check that the world map was properly retrieved and converted into an `sf` object, and plot it with `ggplot2`:
-
-```{r world-plot, fig.width = 10, fig.height = 5, out.width = "90%"}
-ggplot(data = world) +
-    geom_sf()
-```
 
