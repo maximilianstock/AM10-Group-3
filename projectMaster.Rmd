@@ -14,6 +14,7 @@ library(readxl)
 library(tidyverse)
 library(janitor)
 ```
+
 ```{r}
 months <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
 
@@ -48,6 +49,30 @@ for (i in sheets) {
 
 impAgriculture <- impAgriculture %>% 
   clean_names()
+
+```
+
+```{r}
+tempAnomaliesNH <- read_excel("tempAno.xlsx", sheet = "Sheet1", col_types = c("numeric", 
+    "numeric")) %>% 
+  clean_names()
+
+tempAnomaliesSH <-read_excel("tempAno.xlsx", sheet = "Sheet2", col_types = c("numeric", 
+    "numeric")) %>% 
+  clean_names()
+
+tempAnomaliesGlobal <- left_join(tempAnomaliesNH, tempAnomaliesSH, by = "year_jan")
+tempAnomaliesGlobal <- tempAnomaliesGlobal %>% 
+  pivot_longer(cols = c("nh_value_celsius", "sh_value_celsius"), values_to = "tempAnomaly")
+```
+
+```{r}
+library(lubridate)
+master <- master %>% 
+  mutate(date = make_date(year, month))
+
+ggplot(master, aes(x = date, y = extent, color = hemisphere)) +
+  geom_line()
 
 ```
 
