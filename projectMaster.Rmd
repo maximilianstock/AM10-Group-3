@@ -50,52 +50,136 @@ for (i in sheets) {
 
 impAgriculture <- impAgriculture %>% 
   clean_names()
+impGDP <- impGDP%>% 
+  clean_names()
+impLand <- impLand%>% 
+  clean_names()
+impPopulation <- impPopulation%>% 
+  clean_names()
+impUrbanExtent <- impUrbanExtent %>% 
+  clean_names()
 
 ```
 
 ```{r}
 tempAnomaliesNH <- read_excel("tempAno.xlsx", sheet = "Sheet1", col_types = c("numeric", 
     "numeric")) %>% 
-  clean_names()
+  clean_names() %>% 
+  rename("N" = "nh_value_celsius")
 
 tempAnomaliesSH <-read_excel("tempAno.xlsx", sheet = "Sheet2", col_types = c("numeric", 
     "numeric")) %>% 
-  clean_names()
+  clean_names() %>% 
+  rename("S" = "sh_value_celsius")
 
 tempAnomaliesGlobal <- left_join(tempAnomaliesNH, tempAnomaliesSH, by = "year_jan")
 tempAnomaliesGlobal <- tempAnomaliesGlobal %>% 
-  pivot_longer(cols = c("nh_value_celsius", "sh_value_celsius"), values_to = "tempAnomaly")
+  pivot_longer(cols = c("N", "S"), values_to = "tempAnomaly") %>% 
+  rename("hemisphere" = "name", "year" = "year_jan")
 ```
 
 ```{r}
-
-master <- master %>% 
-  mutate(date = make_date(year, month))
 
 yearlyIceMeans <- master %>% 
   select(-reordered) %>% 
   drop_na() %>% 
   group_by(year, hemisphere) %>% 
-  summarise(meanEx = mean(extent), meanAno = mean(extent_anomaly), fill = if_else(meanAno >= 0, "a", "b")) %>% 
-  ggplot(aes(x = year)) +
-    geom_line(aes(y = meanEx, color = hemisphere))+
-    geom_col(aes(y = meanAno*20, fill = fill, )) +
-    scale_y_continuous(
-    
-    # Features of the first axis
-    name = "First Axis",
-    
-    # Add a second axis and specify its features
-    sec.axis = sec_axis(~.*1/20, name="Second Axis")
-  )
+  summarise(meanEx = mean(extent)) %>% 
+  left_join(tempAnomaliesGlobal, by = c("year", "hemisphere")) 
+  
 
-yearlyIceMeans
+
+p1 <- yearlyIceMeans %>% 
+  ggplot(aes(x = year)) +
+    geom_line(aes(y = meanEx, color = hemisphere)) +
+    scale_color_manual(values = c("#2246c7", "#1ba2ea")) +
+    theme_classic() +
+    theme(panel.grid.major.y = element_line(colour = "grey80"), legend.position = "top")
+
+
+p2 <- yearlyIceMeans %>% 
+  ggplot(aes(x = year)) +
+    geom_col(aes(y = tempAnomaly, fill = hemisphere), position = "dodge") +
+    scale_fill_manual(values = c("#2246c7", "#1ba2ea")) +
+    theme_classic() +
+    theme(panel.grid.major.y = element_line(colour = "grey80"), legend.position = "none")
+    
+
+gridExtra::grid.arrange(p1, p2)
 
 ```
 
 ```{r}
+years <- c("1980", "1990", "2000", "2010", "2020")
+
+p2 <- master %>% 
+  mutate(year = factor(year))
+
+ggplot(data = p2 %>% 
+         select(-reordered) %>% 
+         drop_na() %>% 
+         filter(year %in% years), aes(x = month, y = extent)) +
+  geom_line(aes(colour = year)) +
+  facet_wrap(vars(hemisphere), nrow = 2) +
+  scale_color_manual(values = c("#c1cef7", "#a1b0e3" ,"#607ce0", "#2246c7",  "#061c2b")) +
+  theme_classic() 
 
 
 
+```
+```{r}
+
+impGDPBase <- impGDP %>% 
+  mutate(perc1 = x1_meter/total_gdp)
+
+impGDPBase
+
+ggplot(impGDPBase, aes(x = perc1, y = reorder(country_1, perc1))) +
+  geom_col()
+
+library(tmap)
+library(sf)
+plot(world)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+```
+
+
+```{r pkg-install-all, eval = FALSE}
+install.packages(c("cowplot", "googleway", "ggplot2", "ggrepel", 
+    "ggspatial", "libwgeom", "sf", "rnaturalearth", "rnaturalearthdata"))
+```
+
+We start by loading the basic packages necessary for all maps, i.e. `ggplot2` and `sf`. We also suggest to use the classic dark-on-light theme for `ggplot2` (`theme_bw`), which is appropriate for maps:
+
+```{r pkg-ggplot2-sf}
+library("ggplot2")
+theme_set(theme_bw())
+library("sf")
+```
+
+The package `rnaturalearth` provides a map of countries of the entire world. Use `ne_countries` to pull country data and choose the scale (`rnaturalearthhires` is necessary for `scale = "large"`). The function can return `sp` classes (default) or directly `sf` classes, as defined in the argument `returnclass`:
+
+```{r pkg-rnatural}
+library("rnaturalearth")
+library("rnaturalearthdata")
+library(rgeos)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+class(world)
+```
+
+
+# General concepts illustrated with the world map
+
+
+## Data and basic plot (`ggplot` and `geom_sf`)
+
+First, let us start with creating a base map of the world using `ggplot2`. This base map will then be extended with different map elements, as well as zoomed in to an area of interest. We can check that the world map was properly retrieved and converted into an `sf` object, and plot it with `ggplot2`:
+
+```{r world-plot, fig.width = 10, fig.height = 5, out.width = "90%"}
+ggplot(data = world) +
+    geom_sf()
 ```
 
