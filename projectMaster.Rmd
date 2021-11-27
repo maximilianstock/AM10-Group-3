@@ -129,8 +129,9 @@ ggplot(data = p2 %>%
 ```
 ```{r}
 
+
 impGDPBase <- impGDP %>% 
-  mutate(perc5 = x5_meter/total_gdp) %>% 
+  mutate(perc1 = x1_meter/total_gdp) %>% 
   rename("region" = "country_2")
 ```
 
@@ -155,9 +156,8 @@ some.eu.countries <- c("Argentina", "Bahamas", "Belize", "Brazil", "Chile",
 "El Salvador"      ,     "French Guiana"    ,     "Guatemala"      ,       "Guyana", "Haiti", 
  "Honduras"      ,        "Jamaica"           ,    "Mexico", "Suriname"  ,           "Nicaragua"            ,"Peru",   "Panama", "Puerto Rico", "Uruguay"  ,             "Venezuela")
 # Retrievethe map data
-some.eu.maps <- map_data("world", region = some.eu.countries) %>% 
+some.eu.maps <- map_data("world") %>% 
   left_join(impGDPBase, by = "region")
-
 
 library(ggrepel)
 
@@ -168,12 +168,14 @@ region.lab.data <- some.eu.maps %>%
   summarise(long = mean(long), lat = mean(lat))
 
 ggplot(some.eu.maps, aes(x = long, y = lat)) +
-  geom_polygon(aes(group = group, fill = perc5)) +
+  geom_polygon(aes(group = group, fill = perc1), color = "#061c2b", size = 0.08) +
 
   
-    geom_text_repel(box.padding = 0.5, max.overlaps = Inf, aes(label = region), data = region.lab.data, color = "black", size = 2, hjust = 0.5) +
-    scale_fill_gradient(low = "#c1cef7", high = "#061c2b")+
-  coord_sf(crs = "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs ")
+    # geom_text_repel(box.padding = 0.5, max.overlaps = Inf, aes(label = region), data = region.lab.data, color = "black", size = 2, hjust = 0.5) +
+    scale_fill_gradient(low = "#c1cef7", high = "#061c2b", na.value = "white")+
+  coord_sf(crs = "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs ") + 
+  labs(fill = "GDP impacted") +
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),  plot.background = element_rect(fill = "transparent", colour = NA))
   # scale_fill_viridis_d()+
   # theme_void()+
   # theme(legend.position = "none")
