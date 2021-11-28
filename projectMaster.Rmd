@@ -239,7 +239,7 @@ some.eu.countries <- c("Argentina", "Bahamas", "Belize", "Brazil", "Chile",
 "El Salvador"      ,     "French Guiana"    ,     "Guatemala"      ,       "Guyana", "Haiti", 
  "Honduras"      ,        "Jamaica"           ,    "Mexico", "Suriname"  ,           "Nicaragua"            ,"Peru",   "Panama", "Puerto Rico", "Uruguay"  ,             "Venezuela")
 # Retrievethe map data
-some.eu.maps <- map_data("world", region  = "Bahamas")
+some.eu.maps <- map_data("world", region  = "Vietnam")
 
 library(ggrepel)
 
@@ -256,7 +256,7 @@ ggplot(some.eu.maps, aes(x = long, y = lat)) +
 ```
 
 
-```{r}
+```{r, fig.height=3, fig.width=5}
 impLandBase <- impLand %>% 
   mutate("1 Meter" = x1_meter / country_area, "2 Meters" = x2_meter / country_area, "3 Meters" = x3_meter / country_area, "4 Meters"= x4_meter / country_area, "5 Meters" = x5_meter / country_area) %>% 
   filter(country_1 == "BHS") %>%
@@ -284,8 +284,30 @@ ggplot(impLandBase, aes(x=scenario, y=landPercImp)) +
     panel.border = element_blank(),
     axis.ticks.x = element_blank()
   ) +
+  geom_text(aes(label = scales::percent(landPercImp)), vjust =- 1.5, size = 3)+
   xlab("") +
-  ylab("Value of Y")
+  xlim(0,12)+
+  ylab("Value of Y") +
+  scale_y_continuous(labels = scales::percent, limits = c(0,0.7))
+
+```
+```{r, fid.width = 5, fig.height=2}
+
+impGDPBaseNew <- impGDP %>% 
+  mutate("1 Meter" = x1_meter / total_gdp, "2 Meters" = x2_meter / total_gdp, "3 Meters" = x3_meter / total_gdp, "4 Meters"= x4_meter / total_gdp, "5 Meters" = x5_meter / total_gdp) %>% 
+  filter(country_1 %in% c("BHS")) %>%
+  rename("1" = "1 Meter", "2" = "2 Meters", "3" = "3 Meters", "4" = "4 Meters", "5" = "5 Meters") %>% 
+  pivot_longer(cols = c("1", "2", "3", "4", "5"), names_to = "scenario", values_to = "gdpPercImp") %>% 
+  mutate(scenario = as.factor(scenario)) %>% 
+  filter(scenario %in% c("1", "5"))
+
+ggplot(impGDPBaseNew, aes(y = scenario, x = gdpPercImp)) +
+  geom_col(aes(fill = scenario)) +
+  theme_classic() +
+  scale_x_continuous(labels = scales::percent) +
+  scale_fill_manual(values = c("#17379A", "#2146C7")) +
+  theme(legend.position = "none")
+
 
 ```
 
