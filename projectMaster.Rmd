@@ -149,7 +149,7 @@ ggplot(world_map, aes(x = long, y = lat, group = group)) +
   geom_polygon(fill="lightgray", colour = "white")
 ```
 
-```{r}
+```{r, fig.height=8, fig.width=12}
 # Some EU Contries
 some.eu.countries <- c("Argentina", "Bahamas", "Belize", "Brazil", "Chile", 
  "Colombia"      ,        "Costa Rica"       ,     "Cuba",   "Dominican Republic"   , "Ecuador" ,             
@@ -168,7 +168,7 @@ region.lab.data <- some.eu.maps %>%
   summarise(long = mean(long), lat = mean(lat))
 
 ggplot(some.eu.maps, aes(x = long, y = lat)) +
-  geom_polygon(aes(group = group, fill = perc1), color = "#061c2b", size = 0.08) +
+  geom_polygon(aes(group = group, fill = perc1), color = "#061c2b", size = 0.2) +
 
   
     # geom_text_repel(box.padding = 0.5, max.overlaps = Inf, aes(label = region), data = region.lab.data, color = "black", size = 2, hjust = 0.5) +
@@ -182,5 +182,110 @@ ggplot(some.eu.maps, aes(x = long, y = lat)) +
 ```
 
 
+```{r}
+isoContinent <- read_excel("isoContinent.xlsx")
 
+isoContinent <- isoContinent %>% 
+  clean_names() %>% 
+  rename("country_1" = "alpha_3", "cont" = "region")
+
+impGDPBaseJoined <- impGDPBase %>% 
+  left_join(isoContinent[, c("country_1", "cont", "sub_region")], by = "country_1")
+
+outliers = c("VNM", "EGY", "SUR", "MRT", "BEN", "GUY", "BHS")
+
+bps <- impGDPBaseJoined %>%
+  mutate(outLable = if_else(country_1 %in% outliers, region, "")) 
+
+
+ggplot(bps, aes(x = perc1, y = fct_relevel(sub_region, "Melanesia","Sub-Saharan Africa", "Southern Asia",
+             "	
+Melanesia", 
+            "Northern Africa","Latin America and the Caribbean", "Western Asia",
+              "South-eastern Asia", "Eastern Asia"))) +
+    geom_boxplot(outlier.color = "#2246c7", color = "#061c2b") +
+  geom_text_repel(aes(label = outLable), size = 3, color = "#061c2b", box.padding = 0.5, max.overlaps = Inf)+
+    theme_classic() +
+    theme(panel.grid.major.x = element_line(colour = "grey80"), axis.text.y = element_text( size = 6)) +
+    scale_x_continuous(labels = scales::percent) +
+    labs(y = "", x = "")
+
+
+```
+
+
+```{r, fig.height=3, fig.width=5}
+impPopulationBase <- impPopulation %>% 
+  mutate("1 Meter" = x1_meter / country_3, "2 Meters" = x2_meter / country_3, "3 Meters" = x3_meter / country_3, "4 Meters"= x4_meter / country_3, "5 Meters" = x5_meter / country_3) %>% 
+  filter(country_1 == "VNM") %>% 
+  pivot_longer(cols = c("1 Meter", "2 Meters", "3 Meters", "4 Meters", "5 Meters"), names_to = "scenario", values_to = "popPercImp")
+
+ggplot(impPopulationBase, aes(x = popPercImp, y = fct_reorder(scenario, -popPercImp))) +
+  geom_col(fill = "grey90") +
+  theme_classic() +
+  geom_label(aes(label = scales::percent(popPercImp))) +
+   # theme(axis.title.x=element_blank(),
+   #      axis.text.x=element_blank(),
+   #      axis.ticks.x=element_blank())+
+  labs(y = "SLR Scenario") +
+  xlim(0,1)
+
+
+```
+
+```{r}
+some.eu.countries <- c("Argentina", "Bahamas", "Belize", "Brazil", "Chile", 
+ "Colombia"      ,        "Costa Rica"       ,     "Cuba",   "Dominican Republic"   , "Ecuador" ,             
+"El Salvador"      ,     "French Guiana"    ,     "Guatemala"      ,       "Guyana", "Haiti", 
+ "Honduras"      ,        "Jamaica"           ,    "Mexico", "Suriname"  ,           "Nicaragua"            ,"Peru",   "Panama", "Puerto Rico", "Uruguay"  ,             "Venezuela")
+# Retrievethe map data
+some.eu.maps <- map_data("world", region  = "Bahamas")
+
+library(ggrepel)
+
+# Compute the centroid as the mean longitude and lattitude
+# Used as label coordinate for country's names
+region.lab.data <- some.eu.maps %>%
+  group_by(region) %>%
+  summarise(long = mean(long), lat = mean(lat))
+
+ggplot(some.eu.maps, aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group), fill = "#2246c7", color = "#2246c7", size = 0.2) +
+  coord_sf(crs = "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs ") +
+  theme(panel.background = element_rect(fill = "#061c2b"))
+```
+
+
+```{r}
+impLandBase <- impLand %>% 
+  mutate("1 Meter" = x1_meter / country_area, "2 Meters" = x2_meter / country_area, "3 Meters" = x3_meter / country_area, "4 Meters"= x4_meter / country_area, "5 Meters" = x5_meter / country_area) %>% 
+  filter(country_1 == "BHS") %>%
+  rename("1" = "1 Meter", "2" = "2 Meters", "3" = "3 Meters", "4" = "4 Meters", "5" = "5 Meters") %>% 
+  pivot_longer(cols = c("1", "2", "3", "4", "5"), names_to = "scenario", values_to = "landPercImp") %>% 
+  mutate(scenario = as.integer(scenario))
+
+ggplot(impLandBase, aes(x = scenario, y = landPercImp)) +
+  geom_area( colour = "#2246c7", fill ="#2246c7", alpha = 0.4)+
+  geom_point(colour = "#2246c7")+
+  theme_classic() +
+  theme(panel.grid.major.y = element_line(colour = "grey80", size = 0.2)) +
+  scale_y_continuous(labels = scales::percent, limits = c(0,1)) +
+  labs(y = "", x = "")
+
+
+
+ggplot(impLandBase, aes(x=scenario, y=landPercImp)) +
+  geom_segment( aes(x=scenario, xend=scenario, y=0, yend=landPercImp), color="grey80") +
+  # geom_line(color = "grey80")+
+  geom_point( color="#2246c7", size=4) +
+  theme_classic() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.x = element_blank()
+  ) +
+  xlab("") +
+  ylab("Value of Y")
+
+```
 
