@@ -114,6 +114,15 @@ fore2
 
 ```
 
+```{r, regression}
+library(GGally)
+model_data %>% 
+  select(tempN, extent, area, extent_anomaly, sea_level_rise_average) %>% 
+  ggpairs(aes(alpha = 0.2))
+
+model1<-lm( sea_level_rise_average ~ tempN+extent_anomaly , data = model_data)
+summary(model1)
+```
 
 ```{r}
 sheets <- c("Land", "Population", "GDP", "Agriculture", "UrbanExtent")
