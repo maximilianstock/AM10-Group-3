@@ -389,7 +389,7 @@ ggplot(impGDPBaseNew, aes(y = scenario, x = gdpPercImp)) +
   geom_col(aes(fill = scenario)) +
   theme_classic() +
   scale_x_continuous(labels = scales::percent) +
-  scale_fill_manual(values = c("#17379A", "#2146C7")) +
+  scale_fill_manual(values = c( "#2146C7","#17379A")) +
   theme(legend.position = "none")
 
 
