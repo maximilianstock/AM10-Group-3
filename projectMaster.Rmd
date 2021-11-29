@@ -14,6 +14,9 @@ library(readxl)
 library(tidyverse)
 library(janitor)
 library(lubridate)
+library(aTSA)
+library(TSA)
+library(forecast)
 ```
 
 ```{r}
@@ -38,7 +41,79 @@ bindedSH <- bind_rows(SouthernHem)
 master <- bind_rows(bindedNH, bindedSH) %>% 
   clean_names()
 
+
 ```
+
+
+```{r, ice&sealevel_data_operating}
+sea_level<-read.csv("sealevel.csv")
+
+date<-data.frame(matrix(unlist(strsplit(sea_level$Day,"-")),ncol=3, byrow = T))
+colnames(date)<-c("year","month","day")
+sea_level_model<-sea_level %>%
+  select(-Day)%>%
+  mutate(year = as.integer(date$year), month = as.integer(date$month))%>%
+  filter(year >= 1979)%>%
+  select(sea_level_rise_average, year, month)
+
+ice_model<-master %>%
+  filter(month %in% c(1,4,7,10), hemisphere =="N")%>%
+  select(year, month, extent, area, extent_anomaly)
+
+```
+
+
+```{r, tempdatainmprt}
+
+temp<-read.csv("TempNorth.csv")
+temp_data<-data.frame(matrix(unlist(strsplit(temp$Year.Value,",")),ncol=2, byrow = T))
+colnames(temp_data)<-c("date","tempN")
+temp_model<-temp_data %>%
+  mutate(year = as.integer(substr(date,1,4)),
+         month = as.integer(substr(date,5,6)))%>%
+  select(-date)%>%
+  filter(year >=1979, month %in% c(1,4,7,10))
+
+```
+
+```{r, model_data_merger}
+
+model_data_first<- left_join(temp_model,ice_model, by=c("year","month"))
+model_data<-left_join(model_data_first,sea_level_model,by=c("year","month"))
+model_data$tempN<-as.numeric(model_data$tempN)
+model_data<-model_data%>%
+  filter(year<=2020)
+
+```
+
+```{r, time_series}
+
+dt<-ts(as.numeric(model_data$sea_level_rise_average),start = 1979,frequency=4)
+plot(dt)
+plot(diff(dt))
+plot(diff(diff(dt)))
+aTSA::adf.test(diff(dt))
+acf(diff(diff(dt)))
+pacf(diff(diff(dt)))
+#according to the ACF and PACF assessment, we decided to build up arima（0，2，2）model
+fit1<-stats::arima(dt,order = c(2,2,6))
+fit1
+#Using box-test to evaluate the model
+Box.test(fit1$residuals)
+#For fit one, we can forecast the following 10 years' Sea Level Rise
+fore1<-forecast::forecast(fit1,h=40)
+plot(fore1)
+fore1
+
+#adding seasonal trend to our model and build up a HoltWinters Time-series Model
+fit2<- HoltWinters(dt,gamma=T)
+plot(decompose(dt))
+fore2<-forecast(fit2,h=400)
+plot(fore2)
+fore2
+
+```
+
 
 ```{r}
 sheets <- c("Land", "Population", "GDP", "Agriculture", "UrbanExtent")
