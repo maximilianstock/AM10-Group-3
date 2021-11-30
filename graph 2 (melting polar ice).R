@@ -11,6 +11,6 @@ ggplot(data = p2 %>%
   geom_line(aes(colour = year)) +
   scale_color_manual(values = c("#c1cef7", "#a1b0e3" ,"#607ce0", "#2246c7",  "#FF6347")) +
   theme_classic() + labs(title = "Artic Sea Ice Trend since 1979", subtitle = "Comparing the start of every decade, the area of ice has been getting smaller and smaller", y = "Extent\n(Millions of square kilometers)", x=
-                           "Month")
-
+                           "Month") +
+  scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,11,12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 

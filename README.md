@@ -28,7 +28,11 @@ WHAT HAVE WE FOUND OUT?
   - Population: Vietnam - 10.8% of population impacted at 1 m rise
   - Land: Bahamas - 11.6% of land impacted at 1 m rise
   - GDP: Vietnam - 10.2% of GDP impacted at 1 m rise
-  
+
+LIMITATIONS?
+- Limited confidence about prediction due to insufficient historical data of key drivers
+- Overlooking critical implications due to analysis of only two main drivers
+
 
 
 
