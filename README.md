@@ -14,8 +14,8 @@ WHAT IS THE SOURCE OF OUR DATA?
 4. Worldbank World Sea-Level Rise Dataset https://datacatalog.worldbank.org/search/dataset/0041449
 
 ADDITIONAL REFERENCES
-1. Chen et al. (2013) Contribution of ice sheet and mountain glacier melt to recent sea level rise. Nature Geoscience.
-2. 
+1. Chen et al., 2013. Contribution of ice sheet and mountain glacier melt to recent sea level rise. Nature Geoscience.
+2. Martin, C., 2013. Melting Polar Ice Will Spike Sea Levels at the Equator. Smithsonion Magazine.
 
 
 WHAT STATISTICAL TECHNIQUES WILL WE BE USING?
