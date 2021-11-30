@@ -17,6 +17,20 @@ ADDITIONAL REFERENCES
 1. Chen et al., 2013. Contribution of ice sheet and mountain glacier melt to recent sea level rise. Nature Geoscience.
 2. Martin, C., 2013. Melting Polar Ice Will Spike Sea Levels at the Equator. Smithsonion Magazine.
 
+WHAT STATISTICAL TECHNIQUES HAVE WE BEEN USING?
+- We calculate the importance of the two drivers (Polar ice melting and Sea Surface Temperature Rise) for determining seal level rise. This is done through linear regression.
+- We aim to forecast the change in sea level for the upcoming years. For this we rely on time series analysis, namely HoltWinters modelling.
 
-WHAT STATISTICAL TECHNIQUES WILL WE BE USING?
-- We will aim to forecast the change in sea level for the upcoming years. For this, we will be either relying on time-series analysis or regression techniques.
+WHAT HAVE WE FOUND OUT?
+- Arctic Ice Extent has decreased by ~ 30% since 1980. This trend has been consistent throughout seasons.
+- HoltWinters: Sea level will increase by 1 m by 2120 in 95% confidence interval upper level
+- Most drastically impacted countries (percentages):
+  - Population: Vietnam - 10.8% of population impacted at 1 m rise
+  - Land: Bahamas - 11.6% of land impacted at 1 m rise
+  - GDP: Vietnam - 10.2% of GDP impacted at 1 m rise
+  
+
+
+
+
+
