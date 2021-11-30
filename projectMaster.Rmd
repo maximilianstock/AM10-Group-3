@@ -5,6 +5,8 @@ date: "11/26/2021"
 output: html_document
 ---
 
+# Visualisations
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -120,8 +122,12 @@ ggplot(data = p2 %>%
          drop_na() %>% 
          filter(year %in% years), aes(x = month, y = extent)) +
   geom_line(aes(colour = year)) +
+  # geom_area(aes(fill = year)) +
   facet_wrap(vars(hemisphere), nrow = 2) +
-  scale_color_manual(values = c("#c1cef7", "#a1b0e3" ,"#607ce0", "#2246c7",  "#061c2b")) +
+  scale_color_manual(values = c("#c1cef7", "#a1b0e3" ,"#607ce0", "#2246c7",  "#061c2b")) + 
+    # scale_fill_manual(values = c("#c1cef7", "#a1b0e3" ,"#607ce0", "#2246c7",  "#061c2b")) + 
+
+  scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,11,12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")) +
   theme_classic() 
 
 
@@ -143,11 +149,6 @@ theme_set(
   )
 ```
 
-```{r}
-world_map <- map_data("world")
-ggplot(world_map, aes(x = long, y = lat, group = group)) +
-  geom_polygon(fill="lightgray", colour = "white")
-```
 
 ```{r, fig.height=8, fig.width=12}
 # Some EU Contries
@@ -183,6 +184,8 @@ ggplot(some.eu.maps, aes(x = long, y = lat)) +
 
 
 ```{r}
+
+#Supplemental Info
 isoContinent <- read_excel("isoContinent.xlsx")
 
 isoContinent <- isoContinent %>% 
@@ -239,17 +242,28 @@ some.eu.countries <- c("Argentina", "Bahamas", "Belize", "Brazil", "Chile",
 "El Salvador"      ,     "French Guiana"    ,     "Guatemala"      ,       "Guyana", "Haiti", 
  "Honduras"      ,        "Jamaica"           ,    "Mexico", "Suriname"  ,           "Nicaragua"            ,"Peru",   "Panama", "Puerto Rico", "Uruguay"  ,             "Venezuela")
 # Retrievethe map data
-some.eu.maps <- map_data("world", region  = "Vietnam")
+vietnam <- map_data("world", region  = "Vietnam")
 
 library(ggrepel)
 
 # Compute the centroid as the mean longitude and lattitude
 # Used as label coordinate for country's names
-region.lab.data <- some.eu.maps %>%
+region.lab.data <- vietnam %>%
   group_by(region) %>%
   summarise(long = mean(long), lat = mean(lat))
 
-ggplot(some.eu.maps, aes(x = long, y = lat)) +
+ggplot(vietnam, aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group), fill = "#2246c7", color = "#2246c7", size = 0.2) +
+  coord_sf(crs = "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs ") +
+  theme(panel.background = element_rect(fill = "#061c2b"))
+
+bahamas <- map_data("world", region  = "Bahamas")
+
+region.lab.data <- bahamas %>%
+  group_by(region) %>%
+  summarise(long = mean(long), lat = mean(lat))
+
+ggplot(bahamas, aes(x = long, y = lat)) +
   geom_polygon(aes(group = group), fill = "#2246c7", color = "#2246c7", size = 0.2) +
   coord_sf(crs = "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs ") +
   theme(panel.background = element_rect(fill = "#061c2b"))
@@ -291,23 +305,153 @@ ggplot(impLandBase, aes(x=scenario, y=landPercImp)) +
   scale_y_continuous(labels = scales::percent, limits = c(0,0.7))
 
 ```
-```{r, fid.width = 5, fig.height=2}
 
-impGDPBaseNew <- impGDP %>% 
+```{r, fig.width=13, fig.height=3}
+
+isoContinent <- read_excel("isoContinent.xlsx")
+
+isoContinent <- isoContinent %>% 
+  clean_names() %>% 
+  rename("country_1" = "alpha_3", "cont" = "region")
+
+impGDPUpdated <- impGDP %>% 
   mutate("1 Meter" = x1_meter / total_gdp, "2 Meters" = x2_meter / total_gdp, "3 Meters" = x3_meter / total_gdp, "4 Meters"= x4_meter / total_gdp, "5 Meters" = x5_meter / total_gdp) %>% 
-  filter(country_1 %in% c("BHS")) %>%
   rename("1" = "1 Meter", "2" = "2 Meters", "3" = "3 Meters", "4" = "4 Meters", "5" = "5 Meters") %>% 
   pivot_longer(cols = c("1", "2", "3", "4", "5"), names_to = "scenario", values_to = "gdpPercImp") %>% 
-  mutate(scenario = as.factor(scenario)) %>% 
-  filter(scenario %in% c("1", "5"))
+  mutate(scenario = factor(scenario, levels = c("5", "4", "3", "2", "1"))) %>% 
+  group_by(country_1) %>% 
+  mutate(meanImp = mean(gdpPercImp), takeYN = if_else(meanImp >= 0.05, "Y", "N")) %>% 
+  filter(takeYN == "Y") %>% 
+  ungroup() %>% 
+  left_join(isoContinent[, c("country_1", "cont", "sub_region")], by = "country_1")
+  
 
-ggplot(impGDPBaseNew, aes(y = scenario, x = gdpPercImp)) +
-  geom_col(aes(fill = scenario)) +
-  theme_classic() +
-  scale_x_continuous(labels = scales::percent) +
-  scale_fill_manual(values = c( "#2146C7","#17379A")) +
-  theme(legend.position = "none")
+ggplot(impGDPUpdated, aes(x = fct_reorder(country_1, sub_region), y = scenario, fill = gdpPercImp)) +
+    geom_tile() +
+    theme_classic() +
+    # geom_text(aes(label = scales::number(gdpPercImp*100, accuracy = 1), color = gdpPercImp)) +
+    theme(axis.text.x = element_text()) +
+    scale_fill_gradient(low = "white" ,high = "#061c2b") +
+    scale_color_gradient(high = "white" ,low = "#061c2b")
 
 
+
+impGDPUpdated
+```
+
+# Linear Regression and Time Series Analysis
+
+```{r}
+library(readxl)
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(aTSA)
+library(TSA)
+library(forecast)
+```
+
+```{r}
+months <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+
+NorthernHem <- list()
+SouthernHem <- list()
+
+for (i in months) {
+  NorthernHem[[i]] <- read_excel("Sea_Ice_Index_Monthly_Data_with_Statistics_G02135_v3.0.xlsx",
+    sheet = paste0(i,"-NH"), skip = 8, range = "B10:S53")
+}
+
+for (i in months) {
+  SouthernHem[[i]] <- read_excel("Sea_Ice_Index_Monthly_Data_with_Statistics_G02135_v3.0.xlsx",
+    sheet = paste0(i,"-SH"), skip = 8, range = "B10:S53")
+}
+
+bindedNH <- bind_rows(NorthernHem)
+bindedSH <- bind_rows(SouthernHem)
+
+master <- bind_rows(bindedNH, bindedSH) %>% 
+  clean_names()
+
+
+```
+
+
+```{r, ice&sealevel_data_operating}
+sea_level<-read.csv("sealevel.csv")
+
+date<-data.frame(matrix(unlist(strsplit(sea_level$Day,"-")),ncol=3, byrow = T))
+colnames(date)<-c("year","month","day")
+sea_level_model<-sea_level %>%
+  select(-Day)%>%
+  mutate(year = as.integer(date$year), month = as.integer(date$month))%>%
+  filter(year >= 1979)%>%
+  select(sea_level_rise_average, year, month)
+
+ice_model<-master %>%
+  filter(month %in% c(1,4,7,10), hemisphere =="N")%>%
+  select(year, month, extent, area, extent_anomaly)
+
+```
+
+```{r, tempdatainmprt}
+
+temp<-read.csv("TempNorth.csv")
+temp_data<-data.frame(matrix(unlist(strsplit(temp$Year.Value,",")),ncol=2, byrow = T))
+colnames(temp_data)<-c("date","tempN")
+temp_model<-temp_data %>%
+  mutate(year = as.integer(substr(date,1,4)),
+         month = as.integer(substr(date,5,6)))%>%
+  select(-date)%>%
+  filter(year >=1979, month %in% c(1,4,7,10))
+
+```
+
+```{r, model_data_merger}
+
+model_data_first<- left_join(temp_model,ice_model, by=c("year","month"))
+model_data<-left_join(model_data_first,sea_level_model,by=c("year","month"))
+model_data$tempN<-as.numeric(model_data$tempN)
+model_data<-model_data%>%
+  filter(year<=2020)
+
+```
+
+```{r, time_series}
+
+dt<-ts(as.numeric(model_data$sea_level_rise_average),start = 1979,frequency=4)
+plot(dt)
+plot(diff(dt))
+plot(diff(diff(dt)))
+aTSA::adf.test(diff(dt))
+acf(diff(diff(dt)))
+pacf(diff(diff(dt)))
+#according to the ACF and PACF assessment, we decided to build up arima（0，2，2）model
+fit1<-stats::arima(dt,order = c(2,2,6))
+fit1
+#Using box-test to evaluate the model
+Box.test(fit1$residuals)
+#For fit one, we can forecast the following 10 years' Sea Level Rise
+fore1<-forecast::forecast(fit1,h=40)
+plot(fore1)
+fore1
+
+#adding seasonal trend to our model and build up a HoltWinters Time-series Model
+fit2<- HoltWinters(dt,gamma=T)
+plot(decompose(dt))
+fore2<-forecast(fit2,h=400)
+plot(fore2)
+fore2
+
+```
+
+```{r, regression}
+library(GGally)
+model_data %>% 
+  select(tempN, extent, area, extent_anomaly, sea_level_rise_average) %>% 
+  ggpairs(aes(alpha = 0.2))
+
+model1<-lm( sea_level_rise_average ~ tempN+extent_anomaly , data = model_data)
+summary(model1)
 ```
 

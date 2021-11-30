@@ -6,6 +6,8 @@ library("fpp2")
 library("repr")
 library("viridisLite")
 library("viridis")
+library("lubridate")
+library("scales")
 options(repr.plot.width=10, repr.plot.height = 5)
 
 sea_level <- read.csv("sea-level-rise.csv")
