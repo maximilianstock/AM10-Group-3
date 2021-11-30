@@ -306,7 +306,7 @@ ggplot(impLandBase, aes(x=scenario, y=landPercImp)) +
 
 ```
 
-```{r, fig.width=13, fig.height=3}
+```{r, fig.width=7, fig.height=1.4}
 
 isoContinent <- read_excel("isoContinent.xlsx")
 
@@ -323,16 +323,18 @@ impGDPUpdated <- impGDP %>%
   mutate(meanImp = mean(gdpPercImp), takeYN = if_else(meanImp >= 0.05, "Y", "N")) %>% 
   filter(takeYN == "Y") %>% 
   ungroup() %>% 
-  left_join(isoContinent[, c("country_1", "cont", "sub_region")], by = "country_1")
-  
+  left_join(isoContinent[, c("country_1", "cont", "sub_region")], by = "country_1") %>% 
+  mutate(sub_region = factor(sub_region, levels = c("Eastern Asia", "Latin America and the Caribbean", "Northern Africa", "South-eastern Asia", "Sub-Saharan Africa", "Western Asia")), order = if_else(sub_region == "Latin America and the Caribbean", "A", if_else(sub_region == "South-eastern Asia", "B", if_else(sub_region == "Sub-Saharan Africa", "C", "o")))) 
 
-ggplot(impGDPUpdated, aes(x = fct_reorder(country_1, sub_region), y = scenario, fill = gdpPercImp)) +
+
+ggplot(impGDPUpdated, aes(x = fct_reorder(country_1, order), y = scenario, fill = gdpPercImp)) +
     geom_tile() +
     theme_classic() +
     # geom_text(aes(label = scales::number(gdpPercImp*100, accuracy = 1), color = gdpPercImp)) +
     theme(axis.text.x = element_text()) +
-    scale_fill_gradient(low = "white" ,high = "#061c2b") +
-    scale_color_gradient(high = "white" ,low = "#061c2b")
+    scale_fill_gradient(low = "white" ,high = "#061c2b", labels = scales::percent) +
+    scale_color_gradient(high = "white" ,low = "#061c2b") +
+    labs(fill = "Impacted GDP")
 
 
 
